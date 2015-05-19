@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="7702" systemVersion="14D136" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="vXZ-lx-hvc">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7701"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="ufC-wZ-h7g">
+            <objects>
+                <viewController id="vXZ-lx-hvc" customClass="ViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="jyV-Pf-zRb"/>
+                        <viewControllerLayoutGuide type="bottom" id="2fi-mo-0CV"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="kh9-bI-dsS">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <imageView contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="2pp-Sk-fmZ">
+                                <rect key="frame" x="0.0" y="70" width="320" height="240"/>
+                                <color key="backgroundColor" red="0.89411764709999997" green="0.89411764709999997" blue="0.89411764709999997" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="240" id="Eow-uR-PLE"/>
+                                    <constraint firstAttribute="width" constant="320" id="ceg-eG-s9V"/>
+                                </constraints>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zFc-lw-deB">
+                                <rect key="frame" x="90" y="457" width="141" height="47"/>
+                                <color key="backgroundColor" red="0.87843137250000003" green="0.87843137250000003" blue="0.87843137250000003" alpha="1" colorSpace="calibratedRGB"/>
+                                <rect key="contentStretch" x="0.10000000000000001" y="0.15000000000000002" width="0.49999999999999961" height="0.5499999999999996"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="141" id="1Zc-88-6SF"/>
+                                    <constraint firstAttribute="height" constant="47" id="93U-XN-W0b"/>
+                                </constraints>
+                                <state key="normal" title="开始录制">
+                                    <color key="titleColor" red="1" green="0.3586529356" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="captureVideo:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="Id0-n0-EN9"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="bottomMargin" secondItem="zFc-lw-deB" secondAttribute="bottom" constant="64" id="ae6-MV-xG3"/>
+                            <constraint firstAttribute="centerX" secondItem="zFc-lw-deB" secondAttribute="centerX" constant="-0.5" id="hgc-g6-PBS"/>
+                            <constraint firstItem="2pp-Sk-fmZ" firstAttribute="top" secondItem="jyV-Pf-zRb" secondAttribute="bottom" constant="50" id="kn3-qg-adY"/>
+                            <constraint firstAttribute="centerX" secondItem="2pp-Sk-fmZ" secondAttribute="centerX" id="wBi-PP-VES"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="VideoView" destination="2pp-Sk-fmZ" id="Anx-LF-Om5"/>
+                        <outlet property="playBtn" destination="zFc-lw-deB" id="rNK-zF-Z33"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="x5A-6p-PRh" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="181" y="377"/>
+        </scene>
+    </scenes>
+    <simulatedMetricsContainer key="defaultSimulatedMetrics">
+        <simulatedStatusBarMetrics key="statusBar"/>
+        <simulatedOrientationMetrics key="orientation"/>
+        <simulatedScreenMetrics key="destination" type="retina4"/>
+    </simulatedMetricsContainer>
+</document>
