@@ -17,12 +17,14 @@
 @property (nonatomic, strong)AVPlayer    *player;
 
 @property (nonatomic, strong)AVPlayerLayer  *playerLayer;
+
 /**
  *  背景图片
  */
 @property (nonatomic, weak) UIImageView  *bgView;
 
 @property (nonatomic,strong) NSTimer  *timer;
+
 /**
  *网络转圈
  */
