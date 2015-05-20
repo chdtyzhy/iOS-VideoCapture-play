@@ -1,4 +1,4 @@
-# iOS-Video-Capture-and-Play
+# ios video videocaputre  playvideo
 #1.iOS  videoCapture for frames 
 #2.Video codec H264
 #3.video Clip 320*240
