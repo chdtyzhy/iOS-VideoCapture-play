@@ -156,15 +156,15 @@
 
     _recoder.VideoPreviewLayer.frame =CGRectMake(videoLayerX, videoLayerY, videoLayerW, videoLayerH);
     
-    _recoder.coverLayer.frame = _recoder.VideoPreviewLayer.frame;
-    
-    _recoder.cropLayer.frame = _recoder.VideoPreviewLayer.frame;
+//    _recoder.coverLayer.frame = _recoder.VideoPreviewLayer.frame;
+//    
+//    _recoder.cropLayer.frame = _recoder.VideoPreviewLayer.frame;
 //    [_recoder.VideoPreviewLayer  setAffineTransform:(CGAffineTransformMakeRotation((CGFloat)M_PI /2.0))];
      [self.maskView.layer addSublayer:_recoder.VideoPreviewLayer];
 
-     [self.maskView.layer addSublayer:_recoder.coverLayer];
-    
-     [self.maskView.layer addSublayer:_recoder.cropLayer];
+//     [self.maskView.layer addSublayer:_recoder.coverLayer];
+//    
+//     [self.maskView.layer addSublayer:_recoder.cropLayer];
 }
 
 - (void)initProgressBar
@@ -520,6 +520,7 @@
 -(void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
+      
     NSLog(@"=didReceiveMemoryWarning");
     
 }

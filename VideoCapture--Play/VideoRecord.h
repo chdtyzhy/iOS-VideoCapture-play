@@ -59,11 +59,11 @@ typedef enum : NSUInteger {
 /**
  *
  */
-@property (nonatomic ,strong) CALayer  *coverLayer;
-/**
- *
- */
-@property (nonatomic ,strong) CAShapeLayer *cropLayer;
+//@property (nonatomic ,strong) CALayer  *coverLayer;
+///**
+// *
+// */
+//@property (nonatomic ,strong) CAShapeLayer *cropLayer;
 
 /**
  *  设定最大时长

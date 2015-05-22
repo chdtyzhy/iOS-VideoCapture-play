@@ -104,8 +104,6 @@
 -(void)layoutSubviews
 {
     [super layoutSubviews];
-    
-
 }
 -(instancetype)initWithFilePathStr:(NSString*)filePath andFrame:(CGRect)frame andVideoFrame:(CGRect)VF
 {
@@ -128,7 +126,7 @@
     return self;
 }
 
-#pragma mark －－－－－
+#pragma mark --------
 -(void)initVideoLayer:(NSString*)FilePath andFrame:(CGRect)bounds
 {
     self.VideoPath = FilePath;

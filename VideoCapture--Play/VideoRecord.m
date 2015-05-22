@@ -93,6 +93,7 @@
 {
     if (self = [super init]) {
     _writingQueue = dispatch_queue_create( "com.rjping.writing", DISPATCH_QUEUE_SERIAL );
+
     _videoDataOutputQueue = dispatch_queue_create( "com.rjping.session.videodata", DISPATCH_QUEUE_SERIAL );
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(didStartRuning:) name:AVCaptureSessionDidStartRunningNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(didStopRuning:) name:AVCaptureSessionDidStopRunningNotification object:nil];
@@ -232,23 +233,20 @@
         [_captureSession startRunning];
     }
     [self startCountTimer];
-    dispatch_async(_writingQueue, ^{
-        NSError *error;
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        formatter.dateFormat = @"yyyyMMddHHmmss";
-        NSString *nowTimeStr = [formatter stringFromDate:[NSDate dateWithTimeIntervalSinceNow:0]];
-        NSString *fileName = [nowTimeStr stringByAppendingString:@".mp4"];
-        movieURL = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@%@", NSTemporaryDirectory(), fileName]];
+    NSError *error;
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"yyyyMMddHHmmss";
+    NSString *nowTimeStr = [formatter stringFromDate:[NSDate dateWithTimeIntervalSinceNow:0]];
+    NSString *fileName = [nowTimeStr stringByAppendingString:@".mp4"];
+    movieURL = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@%@", NSTemporaryDirectory(), fileName]];
 #pragma mark  输出文件类型
-        _videoWriter = [[AVAssetWriter alloc] initWithURL:movieURL fileType:(NSString *)kUTTypeMPEG4 error:&error];
+    _videoWriter = [[AVAssetWriter alloc] initWithURL:movieURL fileType:(NSString *)kUTTypeMPEG4 error:&error];
         if (error){
             NSLog(@"=error==%@",error.localizedDescription) ;
         }
         else{
             _status = KVideoRecodeStatusPlaying;
-        }
-    });
-
+    }
 }
 /**
  *  开始采集
@@ -401,11 +399,11 @@
     _VideoPreviewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     
     _VideoPreviewLayer.masksToBounds = YES;
-    
-    //添加视频裁剪层
-    _coverLayer = [CALayer layer];
-    
-    _cropLayer = [CAShapeLayer layer];
+//    
+//    //添加视频裁剪层
+//    _coverLayer = [CALayer layer];
+//    
+//    _cropLayer = [CAShapeLayer layer];
 
     
     isOpenCamer = YES;
@@ -546,7 +544,8 @@
                                               [NSNumber numberWithInteger:240], AVVideoHeightKey,
                                               [NSDictionary dictionaryWithObjectsAndKeys:
                                                [NSNumber numberWithInteger:bitsPerSecond], AVVideoAverageBitRateKey,
-                                               [NSNumber numberWithInteger:30], AVVideoMaxKeyFrameIntervalKey,   //AVVideoProfileLevelH264Baseline31,AVVideoProfileLevelKey,
+                                               [NSNumber numberWithInteger:30], AVVideoMaxKeyFrameIntervalKey,   //
+                                               AVVideoProfileLevelH264BaselineAutoLevel,AVVideoProfileLevelKey,
                                                nil], AVVideoCompressionPropertiesKey,
                                               nil];
         _videoCompressionSettings = videoCompressionSettings;
@@ -727,26 +726,24 @@
     NSString *path = [paths objectAtIndex:0];
     
     path = [path stringByAppendingPathComponent:VIDEO_FOLDER];
-    
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     formatter.dateFormat = @"yyyyMMddHHmmss";
     NSString *nowTimeStr = [formatter stringFromDate:[NSDate dateWithTimeIntervalSinceNow:0]];
-    
     NSString *fileName = [[path stringByAppendingPathComponent:nowTimeStr] stringByAppendingString:@"merge.mp4"];
-    
     return fileName;
-    
 }
 
 -(void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
-    if (_videoWriter==nil) {
+    NSLog(@"--captureOutput-%@",[NSThread currentThread]);
+    if (_videoWriter==nil||_writingQueue==nil) {
         return;
     }
-    CMFormatDescriptionRef formatDescription;
-    formatDescription  = CMSampleBufferGetFormatDescription(sampleBuffer);
-    CFRetain(sampleBuffer);
-    CFRetain(formatDescription);
+    @synchronized(self){
+        CMFormatDescriptionRef formatDescription;
+        formatDescription  = CMSampleBufferGetFormatDescription(sampleBuffer);
+        CFRetain(sampleBuffer);
+        CFRetain(formatDescription);
     dispatch_async(_writingQueue, ^{
         if ( _videoWriter ) {
             BOOL wasReadyToRecord = (readyToRecordAudio && readyToRecordVideo);
@@ -770,6 +767,7 @@
         CFRelease(sampleBuffer);
         CFRelease(formatDescription);
    });
+}
 
 }
 
@@ -893,7 +891,6 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
     // No-op if the orientation is already correct
     if (aImage.imageOrientation == UIImageOrientationUp)
         return [self getSubImage:Rect andImage:aImage];
-    
     // We need to calculate the proper transformation to make the image upright.
     // We do it in 2 steps: Rotate if Left/Right/Down, and then flip if Mirrored.
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -955,7 +952,6 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
             CGContextDrawImage(ctx, CGRectMake(0,0,aImage.size.width,aImage.size.height), aImage.CGImage);
             break;
     }
-    
     // And now we just create a new UIImage from the drawing context
     CGImageRef cgimg = CGBitmapContextCreateImage(ctx);
     UIImage *img = [UIImage imageWithCGImage:cgimg];
@@ -976,11 +972,7 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
     UIImage* smallImage = [UIImage imageWithCGImage:subImageRef];
     UIGraphicsEndImageContext();
     
-    
     return [self thumbnailWithImageWithoutScale:smallImage size:CGSizeMake(320, 240)];
-    
-    
-    //
 }
 //缩放图片
 - (UIImage *)thumbnailWithImageWithoutScale:(UIImage *)image size:(CGSize)asize
@@ -1028,26 +1020,27 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
     }
     
     if ( _videoWriter.status == AVAssetWriterStatusWriting ) {
-        
-        if (mediaType == AVMediaTypeVideo) {
-            if (_videoWriterInput.readyForMoreMediaData) {
-                
-                    UIImage *fullImage = [self imageFromSampleBuffer:sampleBuffer];
-                    CGRect rect = [self calcRect:fullImage.size];
-                    UIImage *cropImage = [self cropImageInRect:fullImage andRect:rect];
-                    CMSampleBufferRef cropSamBuf = [self CMSampleBufferCreateCopyWithDeep:sampleBuffer exchangeImage:cropImage];
-                    sampleBuffer = cropSamBuf;
-                if (![_videoWriterInput appendSampleBuffer:cropSamBuf]) {
-                    NSLog(@"视频写入失败%@",_videoWriter.error);
+               if (mediaType == AVMediaTypeVideo) {
+                    if (_videoWriterInput.readyForMoreMediaData) {
+                    NSLog(@"--_videoWriterInput-%@",[NSThread currentThread]);
+                        UIImage *fullImage = [self imageFromSampleBuffer:sampleBuffer];
+                        CGRect rect = [self calcRect:fullImage.size];
+                        UIImage *cropImage = [self cropImageInRect:fullImage andRect:rect];
+                        CMSampleBufferRef  cropSamBuf = [self CMSampleBufferCreateCopyWithDeep:sampleBuffer exchangeImage:cropImage];
+                           sampleBuffer = cropSamBuf;
+                       if (![_videoWriterInput appendSampleBuffer:cropSamBuf]) {
+                                NSLog(@"视频写入失败%@",_videoWriter.error);
+                            }
+                            else{
+                                NSLog(@"视频写入成功");
+                                _videoDataSuccess = YES;
+                            }
+                            CFRelease(cropSamBuf);
                 }
-                else{
-                    NSLog(@"视频写入成功");
-                    _videoDataSuccess = YES;
-                }
-             }
         }
         else if (mediaType == AVMediaTypeAudio) {
             if (_audioWriterInput.readyForMoreMediaData) {
+                NSLog(@"--_audioWriterInput-%@",[NSThread currentThread]);
                 if (![_audioWriterInput appendSampleBuffer:sampleBuffer]) {
                    NSLog(@"音频写入失败＝%@",_videoWriter.error);
                 }
@@ -1064,87 +1057,8 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
 #else
 #define kCGImageAlphaPremultipliedLast  kCGImageAlphaPremultipliedLast
 #endif
-- (CVPixelBufferRef) pixelBufferFromCGImage: (CGImageRef) image
-{
-    
-    CFDictionaryRef empty; // empty value for attr value.
-    CFMutableDictionaryRef attrs;
-    empty = CFDictionaryCreate(kCFAllocatorDefault, // our empty IOSurface properties dictionary
-                               NULL,
-                               NULL,
-                               0,
-                               &kCFTypeDictionaryKeyCallBacks,
-                               &kCFTypeDictionaryValueCallBacks);
-    attrs = CFDictionaryCreateMutable(kCFAllocatorDefault,
-                                      1,
-                                      &kCFTypeDictionaryKeyCallBacks,
-                                      &kCFTypeDictionaryValueCallBacks);
-    
-    CFDictionarySetValue(attrs,
-                         kCVPixelBufferIOSurfacePropertiesKey,
-                         empty);
-    
-    CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));
-   
-    CVPixelBufferRef pxbuffer = NULL;
-    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, frameSize.width,
-                                          frameSize.height,  kCVPixelFormatType_32ARGB, attrs,
-                                          &pxbuffer);
-    NSParameterAssert(status == kCVReturnSuccess && pxbuffer != NULL);
-    
-    CVPixelBufferLockBaseAddress(pxbuffer, 0);
-    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
-    
-
-    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(pxdata, frameSize.width,
-                                                 frameSize.height, 8, 4*frameSize.width, rgbColorSpace,
-                                                 1);
-    
-    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image),
-                                           CGImageGetHeight(image)), image);
-    CGColorSpaceRelease(rgbColorSpace);
-    CGContextRelease(context);
-    
-    CVPixelBufferUnlockBaseAddress(pxbuffer, 0); 
-    
-    return pxbuffer; 
-}
-
-/**
- *  帧处理
- *  @return
- */
-
-- (CMSampleBufferRef)CMSampleBufferCreateCopyWithDeep:(CMSampleBufferRef)sampleBuffer exchangeImage:(UIImage*)image
-{
-//    CFRetain(sampleBuffer);
-////    CMBlockBufferRef dataBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
-////    CVPixelBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-//    CGImageRef imageRef=[image CGImage];
-//    CVImageBufferRef pixelBuffer = [self pixelBufferFromCGImage:imageRef];
-//    CMItemCount timingCount;
-//    CMSampleBufferGetSampleTimingInfoArray(sampleBuffer, 0, nil, &timingCount);
-//    CMSampleTimingInfo* pInfo = malloc(sizeof(CMSampleTimingInfo) * timingCount);
-//    CMSampleBufferGetSampleTimingInfoArray(sampleBuffer, timingCount, pInfo, &timingCount);
-//    
-//    
-//        CMSampleBufferRef sout = nil;
-//   
-//        CVPixelBufferLockBaseAddress(pixelBuffer,0);
-//        
-//        uint8_t *buf=(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer);
-//        size_t size = CVPixelBufferGetDataSize(pixelBuffer);
-//        void * data = nil;
-//        if(buf){
-//            data = malloc(size);
-//            memcpy(data, buf, size);
-//        }
-//        
-//        size_t width = CVPixelBufferGetWidth(pixelBuffer);
-//        size_t height = CVPixelBufferGetHeight(pixelBuffer);
-//        OSType pixFmt = CVPixelBufferGetPixelFormatType(pixelBuffer);
-//        size_t bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer);
+//- (CVPixelBufferRef) pixelBufferFromCGImage: (CGImageRef) image
+//{
 //    
 //    CFDictionaryRef empty; // empty value for attr value.
 //    CFMutableDictionaryRef attrs;
@@ -1163,38 +1077,40 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
 //                         kCVPixelBufferIOSurfacePropertiesKey,
 //                         empty);
 //    
+//    CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));
+//   
+//    CVPixelBufferRef pxbuffer = NULL;
+//    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, frameSize.width,
+//                                          frameSize.height,  kCVPixelFormatType_32ARGB, attrs,
+//                                          &pxbuffer);
+//    NSParameterAssert(status == kCVReturnSuccess && pxbuffer != NULL);
 //    
-//        CVPixelBufferRef pixelBufRef = NULL;
-//        CMSampleTimingInfo timimgInfo = kCMTimingInfoInvalid;
-//        CMSampleBufferGetSampleTimingInfo(sampleBuffer, 0, &timimgInfo);
-//        
-//        OSStatus result = 0;
-//        CVPixelBufferCreateWithBytes(kCFAllocatorDefault, width, height, pixFmt, data, bytesPerRow, NULL, NULL, attrs, &pixelBufRef);
-//        
-//        CMVideoFormatDescriptionRef videoInfo = NULL;
-//        
-//        result = CMVideoFormatDescriptionCreateForImageBuffer(NULL, pixelBufRef, &videoInfo);
-//        
-//        CMSampleBufferCreateForImageBuffer(kCFAllocatorDefault, pixelBufRef, true, NULL, NULL, videoInfo, &timimgInfo, &sout);
-//        
-//        CMItemCount sizeArrayEntries;
-//        CMSampleBufferGetSampleSizeArray(sout, 0, nil, &sizeArrayEntries);
-//        size_t *sizeArrayOut = malloc(sizeof(size_t) * sizeArrayEntries);
-//        CMSampleBufferGetSampleSizeArray(sout, sizeArrayEntries, sizeArrayOut, &sizeArrayEntries);
-//        
-//        free(sizeArrayOut);
-//        
-//        if(!CMSampleBufferIsValid(sout)){
-//            NSLog(@"CMSampleBufferIsNotValid");
-//        
-//    }
+//    CVPixelBufferLockBaseAddress(pxbuffer, 0);
+//    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
 //    
+//
+//    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
+//    CGContextRef context = CGBitmapContextCreate(pxdata, frameSize.width,
+//                                                 frameSize.height, 8, 4*frameSize.width, rgbColorSpace,
+//                                                 1);
 //    
-//    free(pInfo);
-//    CFRelease(sampleBuffer);
+//    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image),
+//                                           CGImageGetHeight(image)), image);
+//    CGColorSpaceRelease(rgbColorSpace);
+//    CGContextRelease(context);
 //    
-//    return sout;
-    
+//    CVPixelBufferUnlockBaseAddress(pxbuffer, 0); 
+//    
+//    return pxbuffer; 
+//}
+
+/**
+ *  帧处理
+ *  @return
+ */
+
+- (CMSampleBufferRef)CMSampleBufferCreateCopyWithDeep:(CMSampleBufferRef)sampleBuffer exchangeImage:(UIImage*)image
+{
     CFDictionaryRef empty; // empty value for attr value.
     CFMutableDictionaryRef attrs;
     empty = CFDictionaryCreate(kCFAllocatorDefault, // our empty IOSurface properties dictionary
@@ -1227,7 +1143,6 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
     CIContext * ciContext = [CIContext contextWithOptions: nil];
     [ciContext render:ciImage toCVPixelBuffer:pixelBuffer];
     CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
-    
     CMSampleTimingInfo sampleTime = {
         .duration = CMSampleBufferGetDuration(sampleBuffer),
         .presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer),
