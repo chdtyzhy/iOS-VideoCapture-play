@@ -740,7 +740,6 @@
         return;
     }
     @synchronized(self){
-        
         @try {
             if (connection==_videoConnection&&_videoWriter) {
                 NSLog(@"--connection==_videoConnection-%@",[NSThread currentThread]);
