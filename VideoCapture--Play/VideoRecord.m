@@ -536,7 +536,7 @@
 //        bitsPerPixel = 4.05; // This bitrate matches the quality produced by AVCaptureSessionPresetMedium or Low.
 //    else
 //        bitsPerPixel = 4.05; // This bitrate matches the quality produced by AVCaptureSessionPresetHigh.
-    bitsPerSecond = numPixels/2.0;
+    bitsPerSecond = numPixels*2.5;
 //    if (_videoCompressionSettings==nil) {
     NSDictionary *videoCompressionSettings = [NSDictionary dictionaryWithObjectsAndKeys:
                                               AVVideoCodecH264, AVVideoCodecKey,
@@ -740,10 +740,30 @@
         return;
     }
     @synchronized(self){
+        
+        @try {
+            if (connection==_videoConnection&&_videoWriter) {
+                NSLog(@"--connection==_videoConnection-%@",[NSThread currentThread]);
+                UIImage *fullImage = [self imageFromSampleBuffer:sampleBuffer];
+                CGRect rect = [self calcRect:fullImage.size];
+                UIImage *cropImage = [self cropImageInRect:fullImage andRect:rect];
+                CMSampleBufferRef  cropSamBuf = [self CMSampleBufferCreateCopyWithDeep:sampleBuffer exchangeImage:cropImage];
+                sampleBuffer = cropSamBuf;
+            }
+        }
+        @catch (NSException *exception) {
+            NSLog(@"exception = %@",exception.description);
+            return;
+        }
         CMFormatDescriptionRef formatDescription;
         formatDescription  = CMSampleBufferGetFormatDescription(sampleBuffer);
         CFRetain(sampleBuffer);
         CFRetain(formatDescription);
+        if (_videoWriter.status == AVAssetWriterStatusCompleted||_videoWriter==nil) {
+            CFRelease(sampleBuffer);
+            CFRelease(formatDescription);
+            return;
+        }
     dispatch_async(_writingQueue, ^{
         if ( _videoWriter ) {
             BOOL wasReadyToRecord = (readyToRecordAudio && readyToRecordVideo);
@@ -888,6 +908,7 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
 }
 - (UIImage*) cropImageInRect:(UIImage*)aImage andRect:(CGRect)Rect{
     
+    NSLog(@"aImage.imageOrientation  = %d",aImage.imageOrientation);
     // No-op if the orientation is already correct
     if (aImage.imageOrientation == UIImageOrientationUp)
         return [self getSubImage:Rect andImage:aImage];
@@ -971,7 +992,7 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
     CGContextDrawImage(context, smallBounds, subImageRef);
     UIImage* smallImage = [UIImage imageWithCGImage:subImageRef];
     UIGraphicsEndImageContext();
-    
+    CFRelease(subImageRef);
     return [self thumbnailWithImageWithoutScale:smallImage size:CGSizeMake(320, 240)];
 }
 //缩放图片
@@ -1023,19 +1044,19 @@ int bitmapInfo = kCGImageAlphaPremultipliedLast;
                if (mediaType == AVMediaTypeVideo) {
                     if (_videoWriterInput.readyForMoreMediaData) {
                     NSLog(@"--_videoWriterInput-%@",[NSThread currentThread]);
-                        UIImage *fullImage = [self imageFromSampleBuffer:sampleBuffer];
-                        CGRect rect = [self calcRect:fullImage.size];
-                        UIImage *cropImage = [self cropImageInRect:fullImage andRect:rect];
-                        CMSampleBufferRef  cropSamBuf = [self CMSampleBufferCreateCopyWithDeep:sampleBuffer exchangeImage:cropImage];
-                           sampleBuffer = cropSamBuf;
-                       if (![_videoWriterInput appendSampleBuffer:cropSamBuf]) {
+//                        UIImage *fullImage = [self imageFromSampleBuffer:sampleBuffer];
+//                        CGRect rect = [self calcRect:fullImage.size];
+//                        UIImage *cropImage = [self cropImageInRect:fullImage andRect:rect];
+//                        CMSampleBufferRef  cropSamBuf = [self CMSampleBufferCreateCopyWithDeep:sampleBuffer exchangeImage:cropImage];
+//                           sampleBuffer = cropSamBuf;
+                       if (![_videoWriterInput appendSampleBuffer:sampleBuffer]) {
                                 NSLog(@"视频写入失败%@",_videoWriter.error);
                             }
                             else{
                                 NSLog(@"视频写入成功");
                                 _videoDataSuccess = YES;
                             }
-                            CFRelease(cropSamBuf);
+//                         CFRelease(cropSamBuf);
                 }
         }
         else if (mediaType == AVMediaTypeAudio) {
