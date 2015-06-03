@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>B6A059FF-67AF-4B4C-AD49-5731754DE522</string>
+	<key>IDESourceControlProjectName</key>
+	<string>VideoCapture--Play</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>F3C4B363B2C682C8FD235B36A61F84B7615861EE</key>
+		<string>https://github.com/chdtyzhy/iOS-VideoCapture-play.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>VideoCapture--Play.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>F3C4B363B2C682C8FD235B36A61F84B7615861EE</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/chdtyzhy/iOS-VideoCapture-play.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>F3C4B363B2C682C8FD235B36A61F84B7615861EE</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>F3C4B363B2C682C8FD235B36A61F84B7615861EE</string>
+			<key>IDESourceControlWCCName</key>
+			<string>iOS-VideoCapture-play</string>
+		</dict>
+	</array>
+</dict>
+</plist>
